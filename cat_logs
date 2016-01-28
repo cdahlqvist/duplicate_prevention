@@ -1,0 +1,43 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use POSIX qw(strftime);
+
+sub usage() {
+    printf("Error: Incorrect number of parameters.\nUSAGE: %s <FILE_PATH>\n       %s <FILE_PATH> <LOG ENTRIES>\n\n", $0, $0);
+    return;
+}
+
+my $counter = 0;
+my $logs = 0;
+
+my ($file, $logcount) = @ARGV;
+
+if (not defined $file || scalar @ARGV > 2) {
+	usage();
+	exit();
+}
+
+if (not defined $logcount) {
+	$logcount = 1000000;
+}
+
+my @loglines = ();
+open(my $fh, "<", $file)
+    or die "Failed to open file: $!\n";
+
+while(my $line = <$fh>) { 
+    chomp $line;
+    $line =~ /^(.+)\[\S+ \S+](.*)$/;
+    push @loglines, [($1, $2)];
+    $logs++;
+}
+
+close $fh;
+
+for (my $f=0; $f < $logcount; $f++) {
+    my $offset = $counter % $logs;
+    printf("%d %s[%s]%s\n", $counter+1, $loglines[$offset][0], strftime('%d/%b/%Y:%X +0000', localtime()), $loglines[$offset][1]);
+    $counter++;
+}
